@@ -12,8 +12,14 @@ create extension if not exists "pgcrypto";
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   full_name text,
+  -- Maps expense category name -> percentage of income allocated to it, e.g. {"Food": 15}
+  budget_allocation jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
+
+-- Safe to re-run: adds the column for projects that ran an earlier version of this script.
+alter table public.profiles
+  add column if not exists budget_allocation jsonb not null default '{}'::jsonb;
 
 alter table public.profiles enable row level security;
 

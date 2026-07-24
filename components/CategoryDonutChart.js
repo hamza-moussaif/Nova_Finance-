@@ -1,5 +1,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { colorForCategory } from "../lib/categories";
+import { useTheme } from "../context/ThemeContext";
+import { useLanguage } from "../context/LanguageContext";
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -10,30 +12,34 @@ function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   const { name, value } = payload[0];
   return (
-    <div className="rounded-xl border border-gray-100 bg-white px-3 py-2 shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
-      <p className="text-xs font-medium text-gray-900">{name}</p>
-      <p className="text-xs text-muted">{currency.format(value)}</p>
+    <div className="rounded-xl border border-gray-100 bg-white px-3 py-2 shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:border-[#2c2c2a] dark:bg-[#1a1a19]">
+      <p className="text-xs font-medium text-gray-900 dark:text-white">{name}</p>
+      <p className="text-xs text-muted dark:text-[#c3c2b7]">{currency.format(value)}</p>
     </div>
   );
 }
 
 export default function CategoryDonutChart({ expensesByCategory }) {
+  const { theme } = useTheme();
+  const { t } = useLanguage();
+
   const data = expensesByCategory.map((d) => ({
     ...d,
-    color: colorForCategory(d.name),
+    label: t(`categories.${d.name}`),
+    color: colorForCategory(d.name, theme),
   }));
 
   const total = data.reduce((sum, d) => sum + d.value, 0);
 
   return (
-    <div className="rounded-3xl bg-surface p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-      <h2 className="mb-5 text-base font-semibold text-gray-900">
-        Expenses by category
+    <div className="rounded-3xl bg-surface p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:bg-[#1a1a19]">
+      <h2 className="mb-5 text-base font-semibold text-gray-900 dark:text-white">
+        {t("expenses.byCategory")}
       </h2>
 
       {data.length === 0 ? (
-        <p className="py-16 text-center text-sm text-muted">
-          No expenses recorded yet.
+        <p className="py-16 text-center text-sm text-muted dark:text-[#c3c2b7]">
+          {t("expenses.noExpenses")}
         </p>
       ) : (
         <div className="flex flex-col items-center gap-6 sm:flex-row">
@@ -43,7 +49,7 @@ export default function CategoryDonutChart({ expensesByCategory }) {
                 <Pie
                   data={data}
                   dataKey="value"
-                  nameKey="name"
+                  nameKey="label"
                   innerRadius={65}
                   outerRadius={95}
                   paddingAngle={2}
@@ -58,8 +64,8 @@ export default function CategoryDonutChart({ expensesByCategory }) {
               </PieChart>
             </ResponsiveContainer>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-xs text-muted">Total</span>
-              <span className="text-lg font-semibold text-gray-900">
+              <span className="text-xs text-muted dark:text-[#c3c2b7]">{t("expenses.total")}</span>
+              <span className="text-lg font-semibold text-gray-900 dark:text-white">
                 {currency.format(total)}
               </span>
             </div>
@@ -75,9 +81,9 @@ export default function CategoryDonutChart({ expensesByCategory }) {
                       className="h-2.5 w-2.5 rounded-full"
                       style={{ backgroundColor: d.color }}
                     />
-                    <span className="text-gray-900">{d.name}</span>
+                    <span className="text-gray-900 dark:text-white">{d.label}</span>
                   </div>
-                  <span className="font-medium text-muted">
+                  <span className="font-medium text-muted dark:text-[#c3c2b7]">
                     {currency.format(d.value)}
                   </span>
                 </li>

@@ -6,6 +6,13 @@ html,
 body {
   background-color: #fafafa;
   color: #111827;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+html.dark,
+html.dark body {
+  background-color: #0d0d0d;
+  color: #ffffff;
 }
 
 * {
@@ -14,4 +21,8 @@ body {
 
 ::selection {
   background-color: #dbeafe;
+}
+
+html.dark ::selection {
+  background-color: #184f95;
 }
