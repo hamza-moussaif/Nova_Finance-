@@ -1,15 +1,35 @@
 import { useEffect, useState } from "react";
-import { Plus, RefreshCw, TrendingUp, TrendingDown, X, Loader2 } from "lucide-react";
+import { Plus, RefreshCw, TrendingUp, TrendingDown, X, Loader2, AlertCircle } from "lucide-react";
 import Layout from "../components/Layout";
 import { useLanguage } from "../context/LanguageContext";
 
 const DEFAULT_WATCHLIST = ["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN"];
 const STORAGE_KEY = "nova-finance-watchlist";
 
+// Finnhub's free /quote endpoint covers more than plain US tickers — crypto and
+// forex use an exchange-prefixed symbol, and many non-US exchanges work with a
+// dot suffix. These are just well-known examples to make that discoverable.
+const MARKETS = [
+  { key: "us", symbols: ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META"] },
+  { key: "crypto", symbols: ["BINANCE:BTCUSDT", "BINANCE:ETHUSDT", "BINANCE:SOLUSDT", "BINANCE:BNBUSDT"] },
+  { key: "forex", symbols: ["OANDA:EUR_USD", "OANDA:GBP_USD", "OANDA:USD_JPY", "OANDA:USD_CHF"] },
+  { key: "europe", symbols: ["NESN.SW", "SAP.DE", "MC.PA", "SIE.DE"] },
+  { key: "asia", symbols: ["7203.T", "0700.HK", "005930.KS"] },
+];
+
 const priceFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
+  maximumFractionDigits: 4,
 });
+
+const rateFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 4 });
+
+// Forex quotes are exchange rates, not USD amounts — formatting "$1.0850" for
+// EUR/USD would be misleading, so those render as a plain number instead.
+function formatQuoteValue(symbol, value) {
+  return symbol.startsWith("OANDA:") ? rateFormatter.format(value) : priceFormatter.format(value);
+}
 
 export default function Stocks() {
   const { t } = useLanguage();
@@ -48,17 +68,28 @@ export default function Stocks() {
     try {
       const results = await Promise.all(
         symbols.map(async (symbol) => {
-          const res = await fetch(`/api/quote?symbol=${encodeURIComponent(symbol)}`);
-          if (res.status === 501) {
-            setApiUnavailable(true);
-            return [symbol, null];
+          try {
+            const res = await fetch(`/api/quote?symbol=${encodeURIComponent(symbol)}`);
+            if (res.status === 501) {
+              setApiUnavailable(true);
+              return [symbol, { status: "unavailable" }];
+            }
+            if (res.status === 404) {
+              return [symbol, { status: "not_found" }];
+            }
+            if (!res.ok) {
+              return [symbol, { status: "error" }];
+            }
+            const data = await res.json();
+            return [symbol, { status: "ok", ...data }];
+          } catch {
+            return [symbol, { status: "error" }];
           }
-          if (!res.ok) return [symbol, null];
-          const data = await res.json();
-          return [symbol, data];
         })
       );
-      setQuotes(Object.fromEntries(results));
+      // Merge rather than replace — a slow/failed fetch for one symbol should
+      // never wipe out quotes already fetched successfully for others.
+      setQuotes((prev) => ({ ...prev, ...Object.fromEntries(results) }));
     } catch {
       setError(t("stocks.fetchError"));
     } finally {
@@ -66,11 +97,15 @@ export default function Stocks() {
     }
   }
 
-  function addSymbol(e) {
-    e.preventDefault();
-    const symbol = symbolInput.trim().toUpperCase();
+  function addSymbolValue(rawSymbol) {
+    const symbol = rawSymbol.trim().toUpperCase();
     if (!symbol || watchlist.includes(symbol)) return;
     setWatchlist((prev) => [...prev, symbol]);
+  }
+
+  function addSymbol(e) {
+    e.preventDefault();
+    addSymbolValue(symbolInput);
     setSymbolInput("");
   }
 
@@ -134,9 +169,40 @@ export default function Stocks() {
           </button>
         </form>
 
+        <div className="mb-6 rounded-3xl bg-surface p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:bg-[#1a1a19]">
+          <p className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+            {t("stocks.popularMarkets")}
+          </p>
+          <div className="space-y-3">
+            {MARKETS.map((market) => (
+              <div key={market.key}>
+                <p className="mb-1.5 text-xs font-medium text-muted dark:text-[#c3c2b7]">
+                  {t(`stocks.market.${market.key}`)}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {market.symbols.map((symbol) => {
+                    const alreadyAdded = watchlist.includes(symbol);
+                    return (
+                      <button
+                        key={symbol}
+                        onClick={() => addSymbolValue(symbol)}
+                        disabled={alreadyAdded}
+                        className="rounded-full bg-background px-3 py-1 text-xs font-medium text-muted transition hover:text-gray-900 disabled:cursor-default disabled:opacity-40 dark:bg-white/5 dark:text-[#c3c2b7] dark:hover:text-white"
+                      >
+                        {symbol}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {watchlist.map((symbol) => {
             const quote = quotes[symbol];
+            const status = quote?.status;
             const up = quote?.change >= 0;
             return (
               <div
@@ -146,10 +212,22 @@ export default function Stocks() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">{symbol}</p>
-                    {quote ? (
+                    {status === "ok" ? (
                       <p className="mt-1 text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
-                        {priceFormatter.format(quote.price)}
+                        {formatQuoteValue(symbol, quote.price)}
                       </p>
+                    ) : status === "not_found" ? (
+                      <p className="mt-1 flex items-center gap-1.5 text-sm text-amber-600 dark:text-amber-400">
+                        <AlertCircle className="h-3.5 w-3.5" strokeWidth={1.75} />
+                        {t("stocks.notFound")}
+                      </p>
+                    ) : status === "error" ? (
+                      <p className="mt-1 flex items-center gap-1.5 text-sm text-rose-600 dark:text-rose-400">
+                        <AlertCircle className="h-3.5 w-3.5" strokeWidth={1.75} />
+                        {t("stocks.quoteError")}
+                      </p>
+                    ) : status === "unavailable" ? (
+                      <p className="mt-1 text-sm text-muted dark:text-[#c3c2b7]">—</p>
                     ) : (
                       <p className="mt-1 text-sm text-muted dark:text-[#c3c2b7]">
                         {loading ? t("transactions.loading") : "—"}
@@ -165,7 +243,7 @@ export default function Stocks() {
                   </button>
                 </div>
 
-                {quote && (
+                {status === "ok" && (
                   <div
                     className={`mt-3 flex items-center gap-1.5 text-sm font-medium ${
                       up ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
@@ -176,7 +254,7 @@ export default function Stocks() {
                     ) : (
                       <TrendingDown className="h-4 w-4" strokeWidth={1.75} />
                     )}
-                    {priceFormatter.format(Math.abs(quote.change))} ({quote.changePercent?.toFixed(2)}%)
+                    {formatQuoteValue(symbol, Math.abs(quote.change))} ({quote.changePercent?.toFixed(2)}%)
                   </div>
                 )}
               </div>
