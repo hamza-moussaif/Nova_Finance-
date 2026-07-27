@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Plus, RefreshCw, TrendingUp, TrendingDown, X, Loader2, AlertCircle } from "lucide-react";
 import Layout from "../components/Layout";
 import { useLanguage } from "../context/LanguageContext";
+import { useAuth } from "../context/AuthContext";
 
 const DEFAULT_WATCHLIST = ["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN"];
 const STORAGE_KEY = "nova-finance-watchlist";
@@ -33,6 +34,7 @@ function formatQuoteValue(symbol, value) {
 
 export default function Stocks() {
   const { t } = useLanguage();
+  const { session } = useAuth();
   const [watchlist, setWatchlist] = useState(DEFAULT_WATCHLIST);
   const [quotes, setQuotes] = useState({});
   const [loading, setLoading] = useState(true);
@@ -52,16 +54,18 @@ export default function Stocks() {
   }, []);
 
   useEffect(() => {
+    if (!session) return;
     fetchQuotes(watchlist);
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(watchlist));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watchlist]);
+  }, [watchlist, session]);
 
   async function fetchQuotes(symbols) {
     if (symbols.length === 0) {
       setLoading(false);
       return;
     }
+    if (!session) return;
     setLoading(true);
     setError("");
 
@@ -69,7 +73,9 @@ export default function Stocks() {
       const results = await Promise.all(
         symbols.map(async (symbol) => {
           try {
-            const res = await fetch(`/api/quote?symbol=${encodeURIComponent(symbol)}`);
+            const res = await fetch(`/api/quote?symbol=${encodeURIComponent(symbol)}`, {
+              headers: { Authorization: `Bearer ${session.access_token}` },
+            });
             if (res.status === 501) {
               setApiUnavailable(true);
               return [symbol, { status: "unavailable" }];

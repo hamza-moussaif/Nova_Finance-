@@ -1,6 +1,28 @@
+import { createClient } from "@supabase/supabase-js";
+
 // Server-side proxy to Finnhub's free quote endpoint. Keeping the API key
 // here (not NEXT_PUBLIC_*) means it's never bundled into client JS.
+//
+// Requires a logged-in Supabase session (Authorization: Bearer <access_token>)
+// so the route — and the paid Finnhub quota behind it — can't be hit by
+// anonymous callers scripting requests straight at this URL.
 export default async function handler(req, res) {
+  const authHeader = req.headers.authorization || "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+
+  if (!token) {
+    return res.status(401).json({ error: "Missing Authorization header" });
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !user) {
+    return res.status(401).json({ error: "Invalid or expired session" });
+  }
+
   const { symbol } = req.query;
   const apiKey = process.env.FINNHUB_API_KEY;
 
