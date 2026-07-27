@@ -207,7 +207,36 @@ easy visual tell during review.
   ship a legend, a tooltip, and use semantic (not arbitrary) color — green/red
   for income/expense, the fixed categorical order for categories.
 
-## 9. Known limitations / natural next steps
+## 9. Notifications
+
+There's no push/email infrastructure — notifications are computed **client-side,
+on every page load**, by `lib/useNotifications.js`, which `Layout.js` mounts
+once (via `NotificationBell`) so it runs no matter which page the user is on.
+It queries transactions, `savings_goals`, `recurring_transactions`, and `trips`
+directly (not through each resource's own page-level hook, to avoid Layout
+depending on whichever page happens to be rendered) and derives four kinds of
+alert, purely from data already in the database — no new table:
+
+| Type | Condition | Severity |
+|---|---|---|
+| `budget` | this month's spend in a category exceeds its `budget_allocation` share of this month's income | warning |
+| `goalOverdue` / `goalDeadline` | a savings goal's `deadline` has passed / falls within 7 days, and it isn't yet funded | warning / info |
+| `recurringDue` | a recurring template's next occurrence (`last_generated_date` + one `frequency` step, via the same `addInterval()` used by the recurring engine, §4) falls within 3 days | info |
+| `tripUpcoming` | a trip's `start_date` falls within 7 days | info |
+
+Each notification carries an `href` so clicking it in the bell's dropdown
+navigates straight to the relevant page (`/budgets`, `/goals`, `/recurring`,
+a specific `/trips/[id]`). Messages are built from translation strings with
+literal `{placeholder}` tokens and `.replace()` — the same lightweight
+approach as the rest of i18n (§7), not a new templating mechanism.
+
+This means notifications are **pull, not push**: they only reflect reality
+at the moment the user has the app open, and they reset on every page
+navigation rather than being dismissed/persisted. There is intentionally no
+"mark as read" state — the alert simply stops appearing once its underlying
+condition (over budget, deadline passed, bill due) is no longer true.
+
+## 10. Known limitations / natural next steps
 
 - Recurring transactions and the trip/goal/budget data are all
   single-user — there's no shared household or multi-user trip collaboration.
@@ -220,3 +249,8 @@ easy visual tell during review.
   start given how easy off-by-one month/leap-year bugs are to introduce there.
 - The recurring engine's catch-up is lazy (see §4) — fine for a personal app,
   not fine if the product ever needs guaranteed same-day generation.
+- Notifications (§9) are in-app only. If the product ever needs to reach a
+  user who isn't looking at the app (an email when a bill is due, a push
+  alert when over budget), that's a genuinely new piece of infra — a
+  Supabase Edge Function on a schedule plus an email provider (e.g. Resend)
+  — not an extension of the current hook.

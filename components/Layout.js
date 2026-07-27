@@ -21,6 +21,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
 import { LANGUAGES } from "../lib/translations";
+import NotificationBell from "./NotificationBell";
 
 export default function Layout({ children }) {
   const { session, loading, signOut, user } = useAuth();
@@ -91,6 +92,7 @@ export default function Layout({ children }) {
         </nav>
 
         <div className="mt-6 flex items-center gap-2 px-2">
+          <NotificationBell />
           <div className="flex rounded-2xl bg-background p-1 dark:bg-white/5">
             {LANGUAGES.map(({ code, label }) => (
               <button

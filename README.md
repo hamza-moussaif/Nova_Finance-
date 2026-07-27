@@ -40,6 +40,10 @@ together, the data model, and the conventions the codebase follows.
   API route so the Finnhub key never reaches the browser.
 - **Trips** — plan a trip end to end: budget, trip-specific expenses,
   day-by-day itinerary, and a packing checklist.
+- **Notifications** — a bell in the sidebar surfaces budget overruns, upcoming
+  savings-goal deadlines, recurring bills due soon, and upcoming trips,
+  computed client-side from existing data (see
+  [Architecture § Notifications](docs/ARCHITECTURE.md#10-notifications)).
 - **Profile & settings** — display name, currency (20 world currencies),
   password change, and a one-click CSV export of the full transaction ledger.
 - **Multi-currency** — every amount is formatted through a single

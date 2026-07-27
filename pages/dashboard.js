@@ -6,7 +6,9 @@ import TransactionForm from "../components/TransactionForm";
 import TransactionList from "../components/TransactionList";
 import CategoryDonutChart from "../components/CategoryDonutChart";
 import TrendChart from "../components/TrendChart";
+import OnboardingChecklist from "../components/OnboardingChecklist";
 import { useTransactions } from "../lib/useTransactions";
+import { useSavingsGoals } from "../lib/useSavingsGoals";
 import { useProfile } from "../context/ProfileContext";
 import { colorForCategory, DEFAULT_BUDGET_ALLOCATION } from "../lib/categories";
 import { formatCurrency } from "../lib/currency";
@@ -24,6 +26,7 @@ export default function Dashboard() {
   const { t } = useLanguage();
   const { transactions, loading, addTransaction, deleteTransaction } =
     useTransactions();
+  const { goals } = useSavingsGoals();
   const { profile } = useProfile();
   const currency = profile.currency;
   const budgetAllocation =
@@ -86,6 +89,12 @@ export default function Dashboard() {
           </h1>
           <p className="mt-1 text-sm text-muted dark:text-[#c3c2b7]">{t("dashboard.subtitle")}</p>
         </div>
+
+        <OnboardingChecklist
+          hasTransaction={transactions.length > 0}
+          hasIncome={transactions.some((tx) => tx.type === "income")}
+          hasGoal={goals.length > 0}
+        />
 
         <div className="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <SummaryCard
