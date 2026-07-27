@@ -35,3 +35,19 @@ html.dark body {
 html.dark ::selection {
   background-color: #184f95;
 }
+
+/* App-wide tactile feedback: any button gets a light press-down effect,
+   so interactions feel responsive without every component wiring it up. */
+button:not(:disabled) {
+  transition: transform 0.1s ease, background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+button:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:not(:disabled):active {
+    transform: none;
+  }
+}
