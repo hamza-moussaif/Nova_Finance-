@@ -1,25 +1,21 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { colorForCategory } from "../lib/categories";
+import { formatCurrency } from "../lib/currency";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
 
-const currency = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-});
-
-function CustomTooltip({ active, payload }) {
+function CustomTooltip({ active, payload, currency }) {
   if (!active || !payload?.length) return null;
   const { name, value } = payload[0];
   return (
     <div className="rounded-xl border border-gray-100 bg-white px-3 py-2 shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:border-[#2c2c2a] dark:bg-[#1a1a19]">
       <p className="text-xs font-medium text-gray-900 dark:text-white">{name}</p>
-      <p className="text-xs text-muted dark:text-[#c3c2b7]">{currency.format(value)}</p>
+      <p className="text-xs text-muted dark:text-[#c3c2b7]">{formatCurrency(value, currency)}</p>
     </div>
   );
 }
 
-export default function CategoryDonutChart({ expensesByCategory }) {
+export default function CategoryDonutChart({ expensesByCategory, currency = "USD" }) {
   const { theme } = useTheme();
   const { t } = useLanguage();
 
@@ -60,13 +56,13 @@ export default function CategoryDonutChart({ expensesByCategory }) {
                     <Cell key={d.name} fill={d.color} />
                   ))}
                 </Pie>
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<CustomTooltip currency={currency} />} />
               </PieChart>
             </ResponsiveContainer>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-xs text-muted dark:text-[#c3c2b7]">{t("expenses.total")}</span>
               <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                {currency.format(total)}
+                {formatCurrency(total, currency)}
               </span>
             </div>
           </div>
@@ -84,7 +80,7 @@ export default function CategoryDonutChart({ expensesByCategory }) {
                     <span className="text-gray-900 dark:text-white">{d.label}</span>
                   </div>
                   <span className="font-medium text-muted dark:text-[#c3c2b7]">
-                    {currency.format(d.value)}
+                    {formatCurrency(d.value, currency)}
                   </span>
                 </li>
               ))}

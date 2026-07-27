@@ -6,15 +6,11 @@ import TransactionForm from "../components/TransactionForm";
 import TransactionList from "../components/TransactionList";
 import CategoryDonutChart from "../components/CategoryDonutChart";
 import { useTransactions } from "../lib/useTransactions";
-import { useBudgets } from "../lib/useBudgets";
-import { colorForCategory } from "../lib/categories";
+import { useProfile } from "../context/ProfileContext";
+import { colorForCategory, DEFAULT_BUDGET_ALLOCATION } from "../lib/categories";
+import { formatCurrency } from "../lib/currency";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
-
-const currency = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-});
 
 function isThisMonth(dateStr) {
   const d = new Date(dateStr);
@@ -27,7 +23,12 @@ export default function Dashboard() {
   const { t } = useLanguage();
   const { transactions, loading, addTransaction, deleteTransaction } =
     useTransactions();
-  const { budgetAllocation } = useBudgets();
+  const { profile } = useProfile();
+  const currency = profile.currency;
+  const budgetAllocation =
+    Object.keys(profile.budget_allocation || {}).length > 0
+      ? profile.budget_allocation
+      : DEFAULT_BUDGET_ALLOCATION;
 
   const stats = useMemo(() => {
     let totalBalance = 0;
@@ -88,19 +89,19 @@ export default function Dashboard() {
         <div className="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <SummaryCard
             label={t("dashboard.totalBalance")}
-            value={currency.format(stats.totalBalance)}
+            value={formatCurrency(stats.totalBalance, currency)}
             icon={Wallet}
             tone="default"
           />
           <SummaryCard
             label={t("dashboard.monthlyIncome")}
-            value={currency.format(stats.monthlyIncome)}
+            value={formatCurrency(stats.monthlyIncome, currency)}
             icon={TrendingUp}
             tone="positive"
           />
           <SummaryCard
             label={t("dashboard.monthlyExpenses")}
-            value={currency.format(stats.monthlyExpenses)}
+            value={formatCurrency(stats.monthlyExpenses, currency)}
             icon={TrendingDown}
             tone="negative"
           />
@@ -108,57 +109,53 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-5">
-            <CategoryDonutChart expensesByCategory={stats.expensesByCategory} />
+            <CategoryDonutChart expensesByCategory={stats.expensesByCategory} currency={currency} />
 
             <div className="rounded-3xl bg-surface p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:bg-[#1a1a19]">
               <h2 className="mb-5 text-base font-semibold text-gray-900 dark:text-white">
                 {t("dashboard.budgetProgress")}
               </h2>
-              {budgetRows.length === 0 ? (
-                <div className="py-6 text-center text-sm text-muted dark:text-[#c3c2b7]">
-                  <p className="mb-3">{t("dashboard.noBudget")}</p>
-                  <a
-                    href="/budgets"
-                    className="inline-block rounded-2xl bg-primary px-4 py-2 text-sm font-medium text-white shadow-soft dark:bg-white/10"
-                  >
+              <div className="space-y-4">
+                {budgetRows.map(({ category, allocated, spent }) => {
+                  const color = colorForCategory(category, theme);
+                  const pct = allocated > 0 ? Math.min(100, (spent / allocated) * 100) : 0;
+                  const over = spent > allocated;
+                  return (
+                    <div key={category}>
+                      <div className="mb-1.5 flex items-center justify-between text-sm">
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {t(`categories.${category}`)}
+                        </span>
+                        <span
+                          className={`text-xs ${
+                            over ? "text-rose-600 dark:text-rose-400" : "text-muted dark:text-[#c3c2b7]"
+                          }`}
+                        >
+                          {over
+                            ? t("dashboard.overBudget")
+                            : `${formatCurrency(spent, currency)} ${t("dashboard.spentOfAllocated")} ${formatCurrency(allocated, currency)}`}
+                        </span>
+                      </div>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            width: `${pct}%`,
+                            backgroundColor: over ? "#e34948" : color,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {Object.keys(profile.budget_allocation || {}).length === 0 && (
+                <p className="mt-4 text-xs text-muted dark:text-[#c3c2b7]">
+                  {t("dashboard.defaultBudgetNotice")}{" "}
+                  <a href="/budgets" className="font-medium text-primary underline dark:text-white">
                     {t("dashboard.setBudget")}
                   </a>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {budgetRows.map(({ category, allocated, spent }) => {
-                    const color = colorForCategory(category, theme);
-                    const pct = allocated > 0 ? Math.min(100, (spent / allocated) * 100) : 0;
-                    const over = spent > allocated;
-                    return (
-                      <div key={category}>
-                        <div className="mb-1.5 flex items-center justify-between text-sm">
-                          <span className="font-medium text-gray-900 dark:text-white">
-                            {t(`categories.${category}`)}
-                          </span>
-                          <span
-                            className={`text-xs ${
-                              over ? "text-rose-600 dark:text-rose-400" : "text-muted dark:text-[#c3c2b7]"
-                            }`}
-                          >
-                            {over
-                              ? t("dashboard.overBudget")
-                              : `${currency.format(spent)} ${t("dashboard.spentOfAllocated")} ${currency.format(allocated)}`}
-                          </span>
-                        </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
-                          <div
-                            className="h-full rounded-full transition-all"
-                            style={{
-                              width: `${pct}%`,
-                              backgroundColor: over ? "#e34948" : color,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                </p>
               )}
             </div>
 

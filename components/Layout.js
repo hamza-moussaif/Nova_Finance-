@@ -7,6 +7,9 @@ import {
   ArrowLeftRight,
   Calculator,
   PieChart,
+  Banknote,
+  LineChart,
+  UserCog,
   LogOut,
   Sun,
   Moon,
@@ -29,8 +32,11 @@ export default function Layout({ children }) {
   const NAV_ITEMS = [
     { href: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
     { href: "/transactions", label: t("nav.transactions"), icon: ArrowLeftRight },
+    { href: "/salary", label: t("nav.salary"), icon: Banknote },
     { href: "/budgets", label: t("nav.budgets"), icon: PieChart },
+    { href: "/stocks", label: t("nav.stocks"), icon: LineChart },
     { href: "/loan-simulator", label: t("nav.loanSimulator"), icon: Calculator },
+    { href: "/profile", label: t("nav.profile"), icon: UserCog },
   ];
 
   if (loading || !session) {
@@ -108,7 +114,9 @@ export default function Layout({ children }) {
         </div>
 
         <div className="mt-6 hidden border-t border-gray-100 pt-4 dark:border-[#2c2c2a] md:block">
-          <p className="truncate px-2 text-xs text-muted">{user?.email}</p>
+          <Link href="/profile" className="block truncate px-2 text-xs text-muted hover:text-gray-900 dark:hover:text-white">
+            {user?.email}
+          </Link>
           <button
             onClick={handleSignOut}
             className="mt-2 flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-medium text-gray-500 transition hover:bg-gray-50 hover:text-gray-900 dark:text-[#c3c2b7] dark:hover:bg-white/5 dark:hover:text-white"

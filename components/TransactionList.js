@@ -1,16 +1,14 @@
 import { ArrowDownLeft, ArrowUpRight, Trash2 } from "lucide-react";
 import { colorForCategory } from "../lib/categories";
+import { formatCurrency } from "../lib/currency";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
-
-const currency = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-});
+import { useProfile } from "../context/ProfileContext";
 
 export default function TransactionList({ transactions, loading, onDelete, limit }) {
   const { theme } = useTheme();
   const { t } = useLanguage();
+  const { profile } = useProfile();
   const rows = limit ? transactions.slice(0, limit) : transactions;
 
   return (
@@ -68,7 +66,7 @@ export default function TransactionList({ transactions, loading, onDelete, limit
                     }`}
                   >
                     {isIncome ? "+" : "-"}
-                    {currency.format(tItem.amount)}
+                    {formatCurrency(tItem.amount, profile.currency)}
                   </span>
                   {onDelete && (
                     <button

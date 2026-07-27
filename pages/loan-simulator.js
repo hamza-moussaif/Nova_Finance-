@@ -2,11 +2,8 @@ import { useMemo, useState } from "react";
 import { Calculator } from "lucide-react";
 import Layout from "../components/Layout";
 import { useLanguage } from "../context/LanguageContext";
-
-const currency = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-});
+import { useProfile } from "../context/ProfileContext";
+import { formatCurrency } from "../lib/currency";
 
 function computeLoan(principal, annualRatePercent, years) {
   const n = years * 12;
@@ -31,6 +28,7 @@ function computeLoan(principal, annualRatePercent, years) {
 
 export default function LoanSimulator() {
   const { t } = useLanguage();
+  const { profile } = useProfile();
   const [amount, setAmount] = useState("20000");
   const [rate, setRate] = useState("5.5");
   const [years, setYears] = useState("5");
@@ -114,18 +112,18 @@ export default function LoanSimulator() {
 
             <p className="text-sm text-white/60">{t("loan.monthlyPayment")}</p>
             <p className="mt-1 text-4xl font-semibold tracking-tight">
-              {currency.format(monthlyPayment || 0)}
+              {formatCurrency(monthlyPayment, profile.currency)}
             </p>
 
             <div className="mt-6 space-y-3 border-t border-white/10 pt-5">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-white/60">{t("loan.totalPaid")}</span>
-                <span className="font-medium">{currency.format(totalPaid || 0)}</span>
+                <span className="font-medium">{formatCurrency(totalPaid, profile.currency)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-white/60">{t("loan.totalInterest")}</span>
                 <span className="font-medium">
-                  {currency.format(totalInterest || 0)}
+                  {formatCurrency(totalInterest, profile.currency)}
                 </span>
               </div>
             </div>

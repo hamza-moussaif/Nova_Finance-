@@ -1,6 +1,9 @@
 -- ============================================================================
--- Personal Finance MVP — Supabase schema
+-- Nova Finance — Supabase schema
 -- Run this in the Supabase SQL Editor (Project > SQL Editor > New query).
+-- Fully idempotent: safe to run again on a project that already applied it —
+-- every statement either uses IF NOT EXISTS/OR REPLACE or drops its own
+-- policy/trigger before recreating it, so re-running never errors.
 -- ============================================================================
 
 -- Extension needed for gen_random_uuid()
@@ -14,23 +17,30 @@ create table if not exists public.profiles (
   full_name text,
   -- Maps expense category name -> percentage of income allocated to it, e.g. {"Food": 15}
   budget_allocation jsonb not null default '{}'::jsonb,
+  -- ISO 4217 currency code used to format amounts across the app, e.g. "USD", "EUR", "MAD"
+  currency text not null default 'USD',
   created_at timestamptz not null default now()
 );
 
--- Safe to re-run: adds the column for projects that ran an earlier version of this script.
+-- Safe to re-run: adds columns for projects that ran an earlier version of this script.
 alter table public.profiles
   add column if not exists budget_allocation jsonb not null default '{}'::jsonb;
+alter table public.profiles
+  add column if not exists currency text not null default 'USD';
 
 alter table public.profiles enable row level security;
 
+drop policy if exists "Users can view their own profile" on public.profiles;
 create policy "Users can view their own profile"
   on public.profiles for select
   using (auth.uid() = id);
 
+drop policy if exists "Users can update their own profile" on public.profiles;
 create policy "Users can update their own profile"
   on public.profiles for update
   using (auth.uid() = id);
 
+drop policy if exists "Users can insert their own profile" on public.profiles;
 create policy "Users can insert their own profile"
   on public.profiles for insert
   with check (auth.uid() = id);
@@ -40,7 +50,8 @@ create or replace function public.handle_new_user()
 returns trigger as $$
 begin
   insert into public.profiles (id, full_name)
-  values (new.id, new.raw_user_meta_data ->> 'full_name');
+  values (new.id, new.raw_user_meta_data ->> 'full_name')
+  on conflict (id) do nothing;
   return new;
 end;
 $$ language plpgsql security definer set search_path = public;
@@ -69,18 +80,22 @@ create index if not exists transactions_user_id_date_idx
 
 alter table public.transactions enable row level security;
 
+drop policy if exists "Users can view their own transactions" on public.transactions;
 create policy "Users can view their own transactions"
   on public.transactions for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can insert their own transactions" on public.transactions;
 create policy "Users can insert their own transactions"
   on public.transactions for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can update their own transactions" on public.transactions;
 create policy "Users can update their own transactions"
   on public.transactions for update
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can delete their own transactions" on public.transactions;
 create policy "Users can delete their own transactions"
   on public.transactions for delete
   using (auth.uid() = user_id);
