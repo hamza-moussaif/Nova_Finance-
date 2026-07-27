@@ -45,7 +45,9 @@ together, the data model, and the conventions the codebase follows.
   computed client-side from existing data (see
   [Architecture § Notifications](docs/ARCHITECTURE.md#10-notifications)).
 - **Profile & settings** — display name, currency (20 world currencies),
-  password change, and a one-click CSV export of the full transaction ledger.
+  password change, and a one-click Excel (.xlsx) export of the full financial
+  statement (summary, by category, by month, full ledger — each its own
+  formatted worksheet).
 - **Multi-currency** — every amount is formatted through a single
   `formatCurrency()` helper driven by the user's chosen currency.
 - **i18n** — English/French, toggled from the sidebar, no page reload.

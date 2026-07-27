@@ -6,7 +6,7 @@ import { useProfile } from "../context/ProfileContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useTransactions } from "../lib/useTransactions";
 import { CURRENCIES } from "../lib/currency";
-import { buildTransactionsCsv, downloadCsv } from "../lib/exportCsv";
+import { downloadFinancialStatement } from "../lib/exportExcel";
 import { supabase } from "../lib/supabaseClient";
 
 export default function Profile() {
@@ -46,12 +46,11 @@ export default function Profile() {
     }
   }
 
-  function handleExport() {
+  async function handleExport() {
     setExporting(true);
     try {
-      const csv = buildTransactionsCsv(transactions, profile.currency, lang);
-      const filename = `nova-finance-bilan-${new Date().toISOString().slice(0, 10)}.csv`;
-      downloadCsv(filename, csv);
+      const filename = `nova-finance-bilan-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      await downloadFinancialStatement(transactions, profile.currency, lang, filename);
     } finally {
       setExporting(false);
     }
