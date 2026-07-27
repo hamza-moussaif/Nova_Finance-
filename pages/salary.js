@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Plus, Loader2 } from "lucide-react";
 import Layout from "../components/Layout";
 import CircularProgress from "../components/CircularProgress";
 import GoalCard from "../components/GoalCard";
@@ -8,6 +9,116 @@ import { useSavingsGoals } from "../lib/useSavingsGoals";
 import { formatCurrency } from "../lib/currency";
 import { CATEGORY_GROUP, BUDGET_GROUP_TARGETS } from "../lib/categories";
 import { useLanguage } from "../context/LanguageContext";
+
+const TODAY = () => new Date().toISOString().slice(0, 10);
+
+function AddIncomeForm({ onAdd }) {
+  const { t } = useLanguage();
+  const [name, setName] = useState("Salary");
+  const [amount, setAmount] = useState("");
+  const [date, setDate] = useState(TODAY());
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+
+    const parsedAmount = parseFloat(amount);
+    if (!name.trim() || !parsedAmount || parsedAmount <= 0) {
+      setError(t("form.error"));
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await onAdd({
+        name: name.trim(),
+        amount: parsedAmount,
+        type: "income",
+        category: "Income",
+        date,
+      });
+      setAmount("");
+      setDate(TODAY());
+    } catch (err) {
+      setError(err.message || t("form.genericError"));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-3xl bg-surface p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:bg-[#1a1a19]"
+    >
+      <h2 className="mb-5 text-base font-semibold text-gray-900 dark:text-white">
+        {t("salary.addIncome")}
+      </h2>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-gray-900 dark:text-white">
+            {t("form.name")}
+          </label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={t("salary.incomeNamePlaceholder")}
+            className="w-full rounded-2xl border border-gray-100 bg-background px-4 py-2.5 text-sm text-gray-900 outline-none transition focus:border-accent/40 focus:ring-4 focus:ring-accent/10 dark:border-[#2c2c2a] dark:bg-white/5 dark:text-white"
+          />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-gray-900 dark:text-white">
+            {t("form.amount")}
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0.00"
+            className="w-full rounded-2xl border border-gray-100 bg-background px-4 py-2.5 text-sm text-gray-900 outline-none transition focus:border-accent/40 focus:ring-4 focus:ring-accent/10 dark:border-[#2c2c2a] dark:bg-white/5 dark:text-white"
+          />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-gray-900 dark:text-white">
+            {t("form.date")}
+          </label>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="w-full rounded-2xl border border-gray-100 bg-background px-4 py-2.5 text-sm text-gray-900 outline-none transition focus:border-accent/40 focus:ring-4 focus:ring-accent/10 dark:border-[#2c2c2a] dark:bg-white/5 dark:text-white"
+          />
+        </div>
+      </div>
+
+      {error && (
+        <p className="mt-3 rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-600 dark:bg-red-500/10 dark:text-red-400">
+          {error}
+        </p>
+      )}
+
+      <button
+        type="submit"
+        disabled={submitting}
+        className="mt-4 flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-soft transition hover:bg-primary/90 disabled:opacity-60 dark:bg-white/10 dark:hover:bg-white/20"
+      >
+        {submitting ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <>
+            <Plus className="h-4 w-4" />
+            {t("salary.addIncome")}
+          </>
+        )}
+      </button>
+    </form>
+  );
+}
 
 function isThisMonth(dateStr) {
   const d = new Date(dateStr);
@@ -46,7 +157,7 @@ function GroupBar({ label, actual, target, income, currency, color }) {
 
 export default function Salary() {
   const { t } = useLanguage();
-  const { transactions } = useTransactions();
+  const { transactions, addTransaction } = useTransactions();
   const { profile } = useProfile();
   const { goals, contribute } = useSavingsGoals();
   const currency = profile.currency;
@@ -89,6 +200,10 @@ export default function Salary() {
             {t("salary.title")}
           </h1>
           <p className="mt-1 text-sm text-muted dark:text-[#c3c2b7]">{t("salary.subtitle")}</p>
+        </div>
+
+        <div className="mb-5">
+          <AddIncomeForm onAdd={addTransaction} />
         </div>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">

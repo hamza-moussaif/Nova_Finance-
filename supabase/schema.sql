@@ -181,3 +181,138 @@ drop policy if exists "Users can delete their own savings goals" on public.savin
 create policy "Users can delete their own savings goals"
   on public.savings_goals for delete
   using (auth.uid() = user_id);
+
+-- ----------------------------------------------------------------------------
+-- trips: end-to-end trip planning — budget, expenses, itinerary, packing list
+-- ----------------------------------------------------------------------------
+create table if not exists public.trips (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  name text not null,
+  destination text,
+  start_date date,
+  end_date date,
+  budget_amount numeric(12, 2) not null default 0,
+  currency text not null default 'USD',
+  created_at timestamptz not null default now()
+);
+
+create index if not exists trips_user_id_idx on public.trips (user_id);
+
+alter table public.trips enable row level security;
+
+drop policy if exists "Users can view their own trips" on public.trips;
+create policy "Users can view their own trips"
+  on public.trips for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own trips" on public.trips;
+create policy "Users can insert their own trips"
+  on public.trips for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own trips" on public.trips;
+create policy "Users can update their own trips"
+  on public.trips for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own trips" on public.trips;
+create policy "Users can delete their own trips"
+  on public.trips for delete
+  using (auth.uid() = user_id);
+
+-- trip_expenses: spending logged against a specific trip's budget
+create table if not exists public.trip_expenses (
+  id uuid primary key default gen_random_uuid(),
+  trip_id uuid not null references public.trips (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  name text not null,
+  amount numeric(12, 2) not null check (amount > 0),
+  category text not null default 'Other',
+  date date not null default current_date,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists trip_expenses_trip_id_idx on public.trip_expenses (trip_id);
+
+alter table public.trip_expenses enable row level security;
+
+drop policy if exists "Users can view their own trip expenses" on public.trip_expenses;
+create policy "Users can view their own trip expenses"
+  on public.trip_expenses for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own trip expenses" on public.trip_expenses;
+create policy "Users can insert their own trip expenses"
+  on public.trip_expenses for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own trip expenses" on public.trip_expenses;
+create policy "Users can delete their own trip expenses"
+  on public.trip_expenses for delete
+  using (auth.uid() = user_id);
+
+-- trip_itinerary_items: day-by-day plan for a trip
+create table if not exists public.trip_itinerary_items (
+  id uuid primary key default gen_random_uuid(),
+  trip_id uuid not null references public.trips (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  item_date date not null,
+  item_time text,
+  title text not null,
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists trip_itinerary_items_trip_id_idx on public.trip_itinerary_items (trip_id);
+
+alter table public.trip_itinerary_items enable row level security;
+
+drop policy if exists "Users can view their own itinerary items" on public.trip_itinerary_items;
+create policy "Users can view their own itinerary items"
+  on public.trip_itinerary_items for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own itinerary items" on public.trip_itinerary_items;
+create policy "Users can insert their own itinerary items"
+  on public.trip_itinerary_items for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own itinerary items" on public.trip_itinerary_items;
+create policy "Users can delete their own itinerary items"
+  on public.trip_itinerary_items for delete
+  using (auth.uid() = user_id);
+
+-- trip_checklist_items: packing / to-do list for a trip
+create table if not exists public.trip_checklist_items (
+  id uuid primary key default gen_random_uuid(),
+  trip_id uuid not null references public.trips (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  label text not null,
+  checked boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists trip_checklist_items_trip_id_idx on public.trip_checklist_items (trip_id);
+
+alter table public.trip_checklist_items enable row level security;
+
+drop policy if exists "Users can view their own checklist items" on public.trip_checklist_items;
+create policy "Users can view their own checklist items"
+  on public.trip_checklist_items for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert their own checklist items" on public.trip_checklist_items;
+create policy "Users can insert their own checklist items"
+  on public.trip_checklist_items for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own checklist items" on public.trip_checklist_items;
+create policy "Users can update their own checklist items"
+  on public.trip_checklist_items for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own checklist items" on public.trip_checklist_items;
+create policy "Users can delete their own checklist items"
+  on public.trip_checklist_items for delete
+  using (auth.uid() = user_id);

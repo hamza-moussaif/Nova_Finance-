@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
-import { Check, Loader2, KeyRound, User } from "lucide-react";
+import { Check, Loader2, KeyRound, User, Download } from "lucide-react";
 import Layout from "../components/Layout";
 import { useAuth } from "../context/AuthContext";
 import { useProfile } from "../context/ProfileContext";
 import { useLanguage } from "../context/LanguageContext";
+import { useTransactions } from "../lib/useTransactions";
 import { CURRENCIES } from "../lib/currency";
+import { buildTransactionsCsv, downloadCsv } from "../lib/exportCsv";
 import { supabase } from "../lib/supabaseClient";
 
 export default function Profile() {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { profile, loading, updateProfile } = useProfile();
+  const { transactions } = useTransactions();
+  const [exporting, setExporting] = useState(false);
 
   const [fullName, setFullName] = useState("");
   const [currency, setCurrency] = useState("USD");
@@ -39,6 +43,17 @@ export default function Profile() {
       setInfoStatus("error");
     } finally {
       setSavingInfo(false);
+    }
+  }
+
+  function handleExport() {
+    setExporting(true);
+    try {
+      const csv = buildTransactionsCsv(transactions, profile.currency);
+      const filename = `nova-finance-bilan-${new Date().toISOString().slice(0, 10)}.csv`;
+      downloadCsv(filename, csv);
+    } finally {
+      setExporting(false);
     }
   }
 
@@ -167,6 +182,26 @@ export default function Profile() {
               </button>
             </div>
           </form>
+
+          <div className="rounded-3xl bg-surface p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:bg-[#1a1a19]">
+            <div className="mb-5 flex items-center gap-2">
+              <Download className="h-4 w-4 text-muted dark:text-[#c3c2b7]" strokeWidth={1.75} />
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                {t("profile.exportTitle")}
+              </h2>
+            </div>
+            <p className="mb-5 text-sm text-muted dark:text-[#c3c2b7]">
+              {t("profile.exportSubtitle")}
+            </p>
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-medium text-white shadow-soft transition hover:bg-primary/90 disabled:opacity-60 dark:bg-white/10 dark:hover:bg-white/20"
+            >
+              <Download className="h-4 w-4" />
+              {t("profile.exportButton")}
+            </button>
+          </div>
 
           <form
             onSubmit={handleChangePassword}

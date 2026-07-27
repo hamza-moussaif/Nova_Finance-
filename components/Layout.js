@@ -12,6 +12,7 @@ import {
   UserCog,
   Repeat,
   Target,
+  Plane,
   LogOut,
   Sun,
   Moon,
@@ -38,6 +39,7 @@ export default function Layout({ children }) {
     { href: "/salary", label: t("nav.salary"), icon: Banknote },
     { href: "/budgets", label: t("nav.budgets"), icon: PieChart },
     { href: "/goals", label: t("nav.goals"), icon: Target },
+    { href: "/trips", label: t("nav.trips"), icon: Plane },
     { href: "/stocks", label: t("nav.stocks"), icon: LineChart },
     { href: "/loan-simulator", label: t("nav.loanSimulator"), icon: Calculator },
     { href: "/profile", label: t("nav.profile"), icon: UserCog },
@@ -70,7 +72,7 @@ export default function Layout({ children }) {
 
         <nav className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
           {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-            const active = router.pathname === href;
+            const active = router.pathname === href || router.pathname.startsWith(`${href}/`);
             return (
               <Link
                 key={href}
