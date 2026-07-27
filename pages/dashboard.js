@@ -5,6 +5,7 @@ import SummaryCard from "../components/SummaryCard";
 import TransactionForm from "../components/TransactionForm";
 import TransactionList from "../components/TransactionList";
 import CategoryDonutChart from "../components/CategoryDonutChart";
+import TrendChart from "../components/TrendChart";
 import { useTransactions } from "../lib/useTransactions";
 import { useProfile } from "../context/ProfileContext";
 import { colorForCategory, DEFAULT_BUDGET_ALLOCATION } from "../lib/categories";
@@ -109,6 +110,7 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-5">
+            <TrendChart transactions={transactions} currency={currency} />
             <CategoryDonutChart expensesByCategory={stats.expensesByCategory} currency={currency} />
 
             <div className="rounded-3xl bg-surface p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:bg-[#1a1a19]">

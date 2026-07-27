@@ -1,8 +1,10 @@
 import { useMemo } from "react";
 import Layout from "../components/Layout";
 import CircularProgress from "../components/CircularProgress";
+import GoalCard from "../components/GoalCard";
 import { useTransactions } from "../lib/useTransactions";
 import { useProfile } from "../context/ProfileContext";
+import { useSavingsGoals } from "../lib/useSavingsGoals";
 import { formatCurrency } from "../lib/currency";
 import { CATEGORY_GROUP, BUDGET_GROUP_TARGETS } from "../lib/categories";
 import { useLanguage } from "../context/LanguageContext";
@@ -46,6 +48,7 @@ export default function Salary() {
   const { t } = useLanguage();
   const { transactions } = useTransactions();
   const { profile } = useProfile();
+  const { goals, contribute } = useSavingsGoals();
   const currency = profile.currency;
 
   const stats = useMemo(() => {
@@ -156,6 +159,24 @@ export default function Salary() {
             </div>
           </div>
         </div>
+
+        {goals.length > 0 && (
+          <div className="mt-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                {t("goals.title")}
+              </h2>
+              <a href="/goals" className="text-sm font-medium text-primary hover:underline dark:text-white">
+                {t("goals.title")} →
+              </a>
+            </div>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              {goals.slice(0, 2).map((goal) => (
+                <GoalCard key={goal.id} goal={goal} currency={currency} onContribute={contribute} compact />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
