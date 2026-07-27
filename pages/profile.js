@@ -10,7 +10,7 @@ import { buildTransactionsCsv, downloadCsv } from "../lib/exportCsv";
 import { supabase } from "../lib/supabaseClient";
 
 export default function Profile() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { user } = useAuth();
   const { profile, loading, updateProfile } = useProfile();
   const { transactions } = useTransactions();
@@ -49,7 +49,7 @@ export default function Profile() {
   function handleExport() {
     setExporting(true);
     try {
-      const csv = buildTransactionsCsv(transactions, profile.currency);
+      const csv = buildTransactionsCsv(transactions, profile.currency, lang);
       const filename = `nova-finance-bilan-${new Date().toISOString().slice(0, 10)}.csv`;
       downloadCsv(filename, csv);
     } finally {
