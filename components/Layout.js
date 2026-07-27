@@ -121,7 +121,7 @@ export default function Layout({ children }) {
           </button>
         </div>
 
-        <div className="mt-6 hidden border-t border-gray-100 pt-4 dark:border-[#2c2c2a] md:block">
+        <div className="mt-6 border-t border-gray-100 pt-4 dark:border-[#2c2c2a]">
           <Link href="/profile" className="block truncate px-2 text-xs text-muted hover:text-gray-900 dark:hover:text-white">
             {user?.email}
           </Link>

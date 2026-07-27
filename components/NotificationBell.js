@@ -70,7 +70,7 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-10 z-20 w-80 rounded-2xl border border-gray-100 bg-white p-2 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:border-[#2c2c2a] dark:bg-[#1a1a19]">
+        <div className="absolute left-0 top-10 z-20 w-80 max-w-[85vw] rounded-2xl border border-gray-100 bg-white p-2 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:border-[#2c2c2a] dark:bg-[#1a1a19]">
           <p className="px-3 py-2 text-sm font-semibold text-gray-900 dark:text-white">
             {t("notifications.title")}
           </p>

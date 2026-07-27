@@ -130,7 +130,7 @@ function ItineraryForm({ onAdd }) {
       <button
         type="submit"
         disabled={submitting}
-        className="flex items-center justify-center rounded-2xl bg-primary px-3 py-2 text-sm font-medium text-white shadow-soft transition hover:bg-primary/90 disabled:opacity-60 dark:bg-white/10 dark:hover:bg-white/20 sm:col-span-4"
+        className="col-span-2 flex items-center justify-center rounded-2xl bg-primary px-3 py-2 text-sm font-medium text-white shadow-soft transition hover:bg-primary/90 disabled:opacity-60 dark:bg-white/10 dark:hover:bg-white/20 sm:col-span-4"
       >
         {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
       </button>
@@ -252,20 +252,20 @@ export default function TripDetail() {
             <div className="mb-4 grid grid-cols-3 gap-3 text-center">
               <div>
                 <p className="text-xs text-muted dark:text-[#c3c2b7]">{t("trips.budget")}</p>
-                <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
+                <p className="mt-1 text-base font-semibold text-gray-900 dark:text-white sm:text-lg">
                   {formatCurrency(trip.budget_amount, trip.currency)}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-muted dark:text-[#c3c2b7]">{t("trips.spent")}</p>
-                <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
+                <p className="mt-1 text-base font-semibold text-gray-900 dark:text-white sm:text-lg">
                   {formatCurrency(totalSpent, trip.currency)}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-muted dark:text-[#c3c2b7]">{t("trips.remaining")}</p>
                 <p
-                  className={`mt-1 text-lg font-semibold ${
+                  className={`mt-1 text-base font-semibold sm:text-lg ${
                     remaining < 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
                   }`}
                 >
