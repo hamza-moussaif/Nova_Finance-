@@ -71,7 +71,7 @@ export default function Layout({ children }) {
           </span>
         </div>
 
-        <nav className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
+        <nav className="flex gap-1 overflow-x-auto md:flex-col md:overflow-auto md:space-y-2">
           {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const active = router.pathname === href || router.pathname.startsWith(`${href}/`);
             return (
