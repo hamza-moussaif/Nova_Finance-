@@ -61,7 +61,7 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen bg-background dark:bg-[#0d0d0d] md:flex">
-      <aside className="border-b border-gray-100 bg-surface p-4 dark:border-[#2c2c2a] dark:bg-[#1a1a19] md:min-h-screen md:w-64 md:border-b-0 md:border-r md:p-6">
+      <aside className="border-b border-gray-100 bg-surface p-4 dark:border-[#2c2c2a] dark:bg-[#1a1a19] md:sticky md:top-0 md:h-screen md:w-64 md:overflow-y-auto md:border-b-0 md:border-r md:p-6">
         <div className="flex items-center gap-2 px-2 pb-6">
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary dark:bg-white/10">
             <Sparkles className="h-5 w-5 text-white" strokeWidth={1.75} />

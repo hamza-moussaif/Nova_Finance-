@@ -4,7 +4,9 @@ import { translations } from "../lib/translations";
 const LanguageContext = createContext(undefined);
 
 function getByPath(obj, path) {
-  return path.split(".").reduce((acc, key) => (acc ? acc[key] : undefined), obj);
+  return path
+    .split(".")
+    .reduce((acc, key) => (acc ? acc[key] : undefined), obj);
 }
 
 export function LanguageProvider({ children }) {
